@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100">
+    <!-- Admin Login Form -->
+    <div id="adminLogin" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg w-96">
+            <h2 class="text-2xl font-bold mb-4">Admin Login</h2>
+            <div class="space-y-4">
+                <input type="email" id="adminEmail" placeholder="Email" value="admin@gmail.com" class="w-full p-2 border rounded">
+                <input type="password" id="adminPassword" placeholder="Password" class="w-full p-2 border rounded">
+                <button id="loginBtn" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Admin Content -->
+    <div id="adminContent" class="hidden">
+        <nav class="bg-white shadow-lg mb-6">
+            <div class="max-w-6xl mx-auto px-4">
+                <div class="flex justify-between items-center py-4">
+                    <span class="font-semibold text-xl">Admin Dashboard</span>
+                    <button onclick="logout()" class="text-red-500 hover:text-red-700">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container mx-auto px-4">
+            <!-- User Management Table -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+                <h2 class="text-xl font-bold p-4 bg-gray-50">User Management</h2>
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Dashboard Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-semibold mb-4">System Statistics</h2>
+                    <canvas id="moistureChart"></canvas>
+                </div>
+
+                <!-- Add Irrigation Schedule Card -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold">Irrigation Schedule</h2>
+                        <button onclick="addSchedule()" class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600">
+                            Add Schedule
+                        </button>
+                    </div>
+                    <div id="scheduleList" class="space-y-4"></div>
+                </div>
+            </div>
+
+            <!-- Add Water Control Section -->
+            <div class="mt-6">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold">Water Control</h2>
+                        <button id="mainWaterToggle" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
+                            Turn On Water
+                        </button>
+                    </div>
+
+                    <!-- Water Control History Table -->
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full table-auto">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Time
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Action
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="waterControlHistory" class="bg-white divide-y divide-gray-200">
+                                <!-- Data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Schedule Modal -->
+    <div id="scheduleModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg w-96">
+            <h3 class="text-xl font-bold mb-4" id="modalTitle">Add Schedule</h3>
+            <form id="scheduleForm" class="space-y-4">
+                <input type="hidden" id="scheduleId">
+                <div>
+                    <label class="block text-sm font-medium">Schedule Name</label>
+                    <input type="text" id="scheduleName" class="w-full border rounded p-2" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium">Start Time</label>
+                    <input type="time" id="startTime" class="w-full border rounded p-2" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium">End Time</label>
+                    <input type="time" id="endTime" class="w-full border rounded p-2" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium">Days of Week</label>
+                    <div class="flex flex-wrap gap-2">
+                        <label><input type="checkbox" value="1"> Mon</label>
+                        <label><input type="checkbox" value="2"> Tue</label>
+                        <label><input type="checkbox" value="3"> Wed</label>
+                        <label><input type="checkbox" value="4"> Thu</label>
+                        <label><input type="checkbox" value="5"> Fri</label>
+                        <label><input type="checkbox" value="6"> Sat</label>
+                        <label><input type="checkbox" value="7"> Sun</label>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 border rounded">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        async function checkAdminLogin() {
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+
+            try {
+                const formData = new FormData();
+                formData.append('email', email);
+                formData.append('password', password);
+
+                const response = await fetch('api/admin/login.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                console.log('Login response:', data); // Debug logging
+
+                if (data.success) {
+                    document.getElementById('adminLogin').classList.add('hidden');
+                    document.getElementById('adminContent').classList.remove('hidden');
+                    initializeAdmin();
+                } else {
+                    alert(data.message || 'Invalid admin credentials!');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Login failed: ' + error.message);
+            }
+        }
+
+        function logout() {
+            document.getElementById('adminLogin').classList.remove('hidden');
+            document.getElementById('adminContent').classList.add('hidden');
+        }
+
+        async function initializeAdmin() {
+            try {
+                await loadUsers();
+                loadSchedules();
+                loadWaterHistory();
+                initChart();
+                setupWaterToggle();
+                // Remove the interval from here and add it to DOMContentLoaded
+            } catch (error) {
+                console.error('Error initializing admin:', error);
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                // Use absolute path
+                const response = await fetch('/abhi-mp/api/admin/get_users.php');
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Server response:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                users = await response.json(); // Store users in global variable
+                if (users.error) {
+                    throw new Error(users.error);
+                }
+                
+                const tbody = document.getElementById('userTableBody');
+                tbody.innerHTML = users.map(user => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">${user.id}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${user.username}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${user.email}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${user.role}</td>
+                        <td class="px-6 py-4 whitespace-nowrap space-x-2">
+                            <button onclick="editUser('${user.id}')" 
+                                    class="text-blue-600 hover:text-blue-900">Edit</button>
+                            <button onclick="deleteUser('${user.id}')" 
+                                    class="text-red-600 hover:text-red-900">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load users:', error);
+                alert('Failed to load users: ' + error.message);
+            }
+        }
+
+        let moistureChart;
+        let users = []; // Add this global variable
+        let waterStatus = false; // Add this global variable
+
+        // Add the getDayNames function
+        function getDayNames(days) {
+            const dayMap = {
+                '1': 'Mon', '2': 'Tue', '3': 'Wed', '4': 'Thu',
+                '5': 'Fri', '6': 'Sat', '7': 'Sun'
+            };
+            return days.split(',').map(d => dayMap[d]).join(', ');
+        }
+
+        function initChart() {
+            // Destroy existing chart if it exists
+            if (moistureChart) {
+                moistureChart.destroy();
+            }
+            const ctx = document.getElementById('moistureChart').getContext('2d');
+            moistureChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Moisture Level',
+                        data: [],
+                        borderColor: 'rgb(59, 130, 246)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1023
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateMoistureData() {
+            fetch('api/get_sensor_data.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.moisture_level) {
+                        const moistureElement = document.getElementById('currentMoisture');
+                        if (moistureElement) {  // Check if element exists before updating
+                            moistureElement.textContent = data.moisture_level;
+                        }
+
+                        if (moistureChart) {  // Check if chart exists
+                            moistureChart.data.labels.push(new Date().toLocaleTimeString());
+                            moistureChart.data.datasets[0].data.push(data.moisture_level);
+
+                            if (moistureChart.data.labels.length > 10) {
+                                moistureChart.data.labels.shift();
+                                moistureChart.data.datasets[0].data.shift();
+                            }
+
+                            moistureChart.update();
+                        }
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function loadSchedules() {
+            fetch('api/get_schedules.php')
+                .then(response => response.json())
+                .then(schedules => {
+                    const scheduleList = document.getElementById('scheduleList');
+                    scheduleList.innerHTML = schedules.map(schedule => `
+                        <div class="flex justify-between items-center border p-4 rounded">
+                            <div>
+                                <h3 class="font-semibold">${schedule.schedule_name}</h3>
+                                <p class="text-sm text-gray-600">
+                                    ${schedule.start_time} - ${schedule.end_time}<br>
+                                    Days: ${getDayNames(schedule.days_of_week)}
+                                </p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="editSchedule('${schedule.id}')" 
+                                        class="bg-gray-200 px-3 py-1 rounded hover:bg-gray-300">
+                                    Edit
+                                </button>
+                                <button onclick="deleteSchedule('${schedule.id}')" 
+                                        class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        async function loadWaterHistory() {
+            try {
+                const response = await fetch('/abhi-mp/api/water_control.php');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    // Update water status based on most recent action
+                    const lastAction = data[0].action;
+                    waterStatus = lastAction === 'ON';
+                    updateWaterToggleButton(document.getElementById('mainWaterToggle'));
+                }
+                
+                document.getElementById('waterControlHistory').innerHTML = data.map(record => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${new Date(record.performed_at).toLocaleString()}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${record.action}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function setupWaterToggle() {
+            const mainWaterToggle = document.getElementById('mainWaterToggle');
+            if (mainWaterToggle) {
+                mainWaterToggle.addEventListener('click', async () => {
+                    try {
+                        const newStatus = !waterStatus; // Toggle the opposite of current status
+                        const action = newStatus ? 'ON' : 'OFF';
+                        
+                        const response = await fetch('/abhi-mp/api/water_control.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to toggle water');
+                        }
+
+                        const data = await response.json();
+                        if (data.success) {
+                            waterStatus = newStatus;
+                            updateWaterToggleButton(mainWaterToggle);
+                            await loadWaterHistory();
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Failed to toggle water: ' + error.message);
+                    }
+                });
+            }
+        }
+
+        // Add this new function to update button appearance
+        function updateWaterToggleButton(button) {
+            if (!button) return;
+            
+            button.textContent = waterStatus ? 'Turn Off Water' : 'Turn On Water';
+            button.classList.toggle('bg-red-500', waterStatus);
+            button.classList.toggle('bg-blue-500', !waterStatus);
+        }
+
+        async function editUser(userId) {
+            try {
+                const user = users.find(u => u.id === userId);
+                if (!user) return;
+
+                const newUsername = prompt('Enter new username:', user.username);
+                const newEmail = prompt('Enter new email:', user.email);
+                const newRole = prompt('Enter role (user/admin):', user.role);
+
+                if (!newUsername || !newEmail || !newRole) return;
+
+                const response = await fetch('/abhi-mp/api/admin/edit_user.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: userId,
+                        username: newUsername,
+                        email: newEmail,
+                        role: newRole
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to update user');
+                
+                await loadUsers(); // Reload the users table
+                alert('User updated successfully');
+            } catch (error) {
+                console.error('Error updating user:', error);
+                alert('Failed to update user');
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (confirm('Are you sure you want to delete this user?')) {
+                try {
+                    const response = await fetch(`/abhi-mp/api/admin/delete_user.php?id=${userId}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (!response.ok) throw new Error('Failed to delete user');
+                    
+                    await loadUsers(); // Reload the users table
+                    alert('User deleted successfully');
+                } catch (error) {
+                    console.error('Error deleting user:', error);
+                    alert('Failed to delete user');
+                }
+            }
+        }
+
+        function addSchedule() {
+            document.getElementById('scheduleModal').classList.remove('hidden');
+            document.getElementById('scheduleForm').reset();
+            document.getElementById('scheduleId').value = '';
+        }
+
+        document.getElementById('scheduleForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = {
+                schedule_name: document.getElementById('scheduleName').value,
+                start_time: document.getElementById('startTime').value,
+                end_time: document.getElementById('endTime').value,
+                days_of_week: Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+                    .map(cb => cb.value)
+                    .join(',')
+            };
+
+            const scheduleId = document.getElementById('scheduleId').value;
+            const method = scheduleId ? 'PUT' : 'POST';
+            if (scheduleId) formData.id = scheduleId;
+
+            try {
+                const response = await fetch('/abhi-mp/api/schedules/manage.php', {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) throw new Error('Failed to save schedule');
+                
+                document.getElementById('scheduleModal').classList.add('hidden');
+                loadSchedules();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to save schedule');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginBtn = document.getElementById('loginBtn');
+            if (loginBtn) {
+                loginBtn.addEventListener('click', checkAdminLogin);
+            }
+
+            document.getElementById('adminPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    checkAdminLogin();
+                }
+            });
+
+            // Only start the interval if we're logged in
+            if (!document.getElementById('adminLogin').classList.contains('hidden')) {
+                setInterval(updateMoistureData, 5000);
+            }
+        });
+    </script>
+</body>
+</html>

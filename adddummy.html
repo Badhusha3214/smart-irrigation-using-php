@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Dummy Sensor Data</title>
+    <style>
+        body { font-family: Arial; max-width: 500px; margin: 20px auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        input { width: 100%; padding: 8px; margin-top: 5px; }
+        button { padding: 10px 20px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Add Dummy Sensor Data</h2>
+    <form id="sensorForm">
+        <div class="form-group">
+            <label>Sensor ID:</label>
+            <input type="text" id="sensor_id" value="SENSOR_001" readonly>
+        </div>
+        <div class="form-group">
+            <label>Moisture Level (0-1000):</label>
+            <input type="number" id="moisture_level" min="0" max="1000" value="500">
+        </div>
+        <button type="submit">Submit Data</button>
+    </form>
+    <p id="result"></p>
+
+    <script>
+        document.getElementById('sensorForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const data = {
+                sensor_id: document.getElementById('sensor_id').value,
+                moisture_level: parseInt(document.getElementById('moisture_level').value)
+            };
+            
+            console.log('Sending data:', data); // Debug log
+            
+            try {
+                const response = await fetch('api/update_sensor_data.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                console.log('Response:', response); // Debug log
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('Result:', result); // Debug log
+                
+                document.getElementById('result').textContent = 
+                    `Data added successfully! Action: ${result.action}`;
+            } catch (error) {
+                console.error('Error:', error); // Debug log
+                document.getElementById('result').textContent = 
+                    'Error adding data: ' + error.message;
+            }
+        };
+    </script>
+</body>
+</html>
